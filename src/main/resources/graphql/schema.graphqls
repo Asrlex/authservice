@@ -1,0 +1,13 @@
+# GraphQL schema definition
+type User {
+    id: ID!
+    username: String!
+    email: String!
+    role: String
+}
+
+type Query {
+    allUsers: [User]
+    user(id: ID!): User
+    me: User
+}
