@@ -2,9 +2,12 @@ package dev.api.auth.authservice.api.auth;
 
 import dev.api.auth.authservice.api.auth.entities.IssuedTokens;
 import dev.api.auth.authservice.api.auth.entities.LoginRequest;
+import dev.api.auth.authservice.api.auth.entities.PasswordResetToken;
 import dev.api.auth.authservice.api.auth.entities.RegisterRequest;
+import dev.api.auth.authservice.api.auth.utils.TokenUtils;
 import dev.api.auth.authservice.api.users.User;
 import dev.api.auth.authservice.api.users.UserRepository;
+import dev.api.auth.authservice.api.users.dtos.PasswordChange;
 import dev.api.auth.authservice.common.exceptions.ResourceAlreadyInUseException;
 import dev.api.auth.authservice.common.exceptions.ResourceNotFoundException;
 import dev.api.auth.authservice.security.JwtService;
@@ -18,6 +21,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.Map;
@@ -30,12 +34,21 @@ public class AuthService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final RefreshTokenService refreshTokenService;
+	private final ResetTokenRepository resetTokenRepository;
+	private final TokenUtils tokenUtils;
 
-	public AuthService(JwtService jwtService,  UserRepository userRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService) {
+	public AuthService(JwtService jwtService,
+					   UserRepository userRepository,
+					   PasswordEncoder passwordEncoder,
+					   RefreshTokenService refreshTokenService,
+					   ResetTokenRepository resetTokenRepository,
+					   TokenUtils tokenUtils) {
 		this.jwtService = jwtService;
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.refreshTokenService = refreshTokenService;
+		this.resetTokenRepository = resetTokenRepository;
+		this.tokenUtils = tokenUtils;
 	}
 
 	/**
@@ -114,6 +127,50 @@ public class AuthService {
 			refreshTokenService.revokeAllForUser(userId);
 		}
 		response.addHeader(HttpHeaders.SET_COOKIE, createRefreshTokenCookie("", 0) );
+	}
+
+	/**
+	 * Initiate password reset process for a user by email
+	 *
+	 * @param email - the user's email
+	 */
+	@Transactional
+	public void initiatePasswordReset(String email) {
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new ResourceNotFoundException("User with email " + email + " not found"));
+		String token = tokenUtils.generateRandomToken(32);
+		String tokenHash = tokenUtils.hashToken(token);
+		PasswordResetToken passwordResetToken = new PasswordResetToken(
+				user.getId(),
+				tokenHash
+		);
+		resetTokenRepository.save(passwordResetToken);
+
+		String resetLink = "https://yourapp.com/reset-password?token=" + token + "&email=" + email;
+		// Simulate sending email by printing to console
+		System.out.println("Password reset link for " + email + ": " + resetLink);
+	}
+
+	/**
+	 * Complete password reset process for a user
+	 *
+	 * @param dto - map containing "email", "newPassword", and "resetToken"
+	 */
+	@Transactional
+	public void completePasswordReset(PasswordChange dto) {
+		PasswordResetToken resetToken = resetTokenRepository.findByTokenHash(tokenUtils.hashToken(dto.resetToken()))
+				.orElseThrow(() -> new ResourceNotFoundException("Invalid or expired reset token"));
+		if (resetToken.isUsed() || resetToken.getExpiresAt().isBefore(java.time.Instant.now())) {
+			throw new ResourceNotFoundException("Invalid or expired reset token");
+		}
+		User user = userRepository.findById(resetToken.getUserId())
+				.orElseThrow(() -> new ResourceNotFoundException("User not found for reset token"));
+		user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
+		userRepository.save(user);
+		resetToken.setUsed(true);
+		resetTokenRepository.save(resetToken);
+		// Simulate sending confirmation email by printing to console
+		System.out.println("Password reset completed for user: " + dto.resetToken());
 	}
 
 	/**

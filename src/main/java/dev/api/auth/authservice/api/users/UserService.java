@@ -1,6 +1,6 @@
 package dev.api.auth.authservice.api.users;
 
-import dev.api.auth.authservice.api.auth.entities.LoginRequest;
+import dev.api.auth.authservice.api.users.dtos.PasswordChange;
 import dev.api.auth.authservice.api.users.dtos.UpdateUserDto;
 import dev.api.auth.authservice.api.users.dtos.UserDto;
 import dev.api.auth.authservice.common.entities.search.SearchCriteria;
@@ -229,15 +229,35 @@ public class UserService {
 	 * @return map containing success message
 	 */
 	@Transactional
-	public UserDto changePassword(LoginRequest dto) {
-		User user = userRepository.findByEmail(dto.getEmail())
-				.orElseThrow(() -> new ResourceNotFoundException("User with email " + dto.getEmail() + " not found"));
+	public UserDto passwordChange(PasswordChange dto, Authentication auth) {
+		String email = auth.getName();
 
-		if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new ResourceNotFoundException("User with email " + email + " not found"));
+
+		if (!passwordEncoder.matches(dto.currentPassword(), user.getPasswordHash())) {
 			throw new RuntimeException("Invalid current password");
 		}
 
-		user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+		user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
+		User saved = userRepository.save(user);
+		UserDto savedDto = saved.generateDto();
+		eventPublisher.publishEvent(new UserUpdatedEvent(savedDto));
+
+		return savedDto;
+	}
+
+	/**
+	 * Admin reset password for a user
+	 *
+	 * @param dto - map containing userId and new password
+	 * @return User - updated User
+	 */
+	@Transactional
+	public UserDto adminPasswordChange(PasswordChange dto) {
+		User user = userRepository.findById(dto.userId())
+				.orElseThrow(() -> new ResourceNotFoundException("User with id " + dto.userId() + " not found"));
+		user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
 		User saved = userRepository.save(user);
 		UserDto savedDto = saved.generateDto();
 		eventPublisher.publishEvent(new UserUpdatedEvent(savedDto));

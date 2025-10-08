@@ -1,6 +1,6 @@
 package dev.api.auth.authservice.api.users;
 
-import dev.api.auth.authservice.api.auth.entities.LoginRequest;
+import dev.api.auth.authservice.api.users.dtos.PasswordChange;
 import dev.api.auth.authservice.api.users.dtos.UpdateUserDto;
 import dev.api.auth.authservice.api.users.dtos.UserDto;
 import dev.api.auth.authservice.common.entities.search.SearchCriteria;
@@ -28,6 +28,7 @@ public class UserController {
 	}
 
 	@GetMapping()
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Get paginated Users", description = "Retrieve a list of paginated users")
 	@ApiResponses(value = {
 		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successful retrieval of user list"),
@@ -39,6 +40,7 @@ public class UserController {
 	}
 
 	@GetMapping("/all")
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Get All Users", description = "Retrieve a list of all users")
 	@ApiResponses(value = {
 		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successful retrieval of user list"),
@@ -129,8 +131,24 @@ public class UserController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access")
 	})
-	public UserDto changePassword(LoginRequest dto) {
-		return this.userService.changePassword(dto);
+	public UserDto passwordChange(@RequestBody PasswordChange dto, Authentication auth) {
+		return this.userService.passwordChange(dto, auth);
+	}
+
+	@PutMapping("/change-password-admin")
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "Change Password", description = "Change the password of any user (Admin only)")
+	@io.swagger.v3.oas.annotations.parameters.RequestBody(
+			description = "Change password payload",
+			required = true
+	)
+	@ApiResponses(value = {
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password changed successfully"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access")
+	})
+	public UserDto adminPasswordChange(@RequestBody PasswordChange dto) {
+		return this.userService.adminPasswordChange(dto);
 	}
 
 	@DeleteMapping("/{id}")
