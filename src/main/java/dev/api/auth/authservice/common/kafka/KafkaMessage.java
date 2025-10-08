@@ -6,18 +6,18 @@ import java.time.Instant;
 
 public class KafkaMessage<T> {
 
-	public enum Type {
-		CREATE, UPDATE, DELETE, RESTORE
+	public enum KafkaMessageType {
+		CREATE_ENTITY, UPDATE_ENTITY, DELETE_ENTITY, RESTORE_ENTITY, EMAIL
 	}
 
 	@Getter
-	private final Type type;
+	private final KafkaMessageType type;
 	@Getter
 	private final Instant timestamp;
 	@Getter
 	private final T payload;
 
-	public KafkaMessage(Type type, T data) {
+	public KafkaMessage(KafkaMessageType type, T data) {
 		this.type = type;
 		this.payload = data;
 		this.timestamp = Instant.now();

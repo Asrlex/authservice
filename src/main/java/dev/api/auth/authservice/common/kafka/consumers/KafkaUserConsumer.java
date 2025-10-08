@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.api.auth.authservice.api.users.dtos.UserDto;
 import dev.api.auth.authservice.common.kafka.KafkaMessage;
 import dev.api.auth.authservice.common.kafka.KafkaService;
+import dev.api.auth.authservice.common.kafka.events.KafkaTopics;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -16,14 +17,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class KafkaUserConsumer extends KafkaGenericConsumer<UserDto> {
 
-	private static final String TOPIC = "user-events";
+	private static final String TOPIC = KafkaTopics.USER_EVENTS;
 
 	public KafkaUserConsumer(ObjectMapper mapper, KafkaService kafkaService) {
 		super(mapper, kafkaService);
 	}
 
 	/**
-	 * Listens to the "user-events" topic and processes incoming messages.
+	 * Listens to the KafkaTopics.USER_EVENTS topic and processes incoming messages.
 	 *
 	 * @param messageJson the JSON message received from Kafka
 	 */

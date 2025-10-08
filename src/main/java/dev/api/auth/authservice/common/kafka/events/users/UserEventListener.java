@@ -18,21 +18,21 @@ public class UserEventListener {
 
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleUserCreated(UserCreatedEvent event) {
-		eventPublisher.publishEvent(TOPIC, KafkaMessage.Type.CREATE, event.user());
+		eventPublisher.publishEvent(TOPIC, KafkaMessage.KafkaMessageType.CREATE_ENTITY, event.user());
 	}
 
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleUserUpdated(UserUpdatedEvent event) {
-		eventPublisher.publishEvent(TOPIC, KafkaMessage.Type.UPDATE, event.user());
+		eventPublisher.publishEvent(TOPIC, KafkaMessage.KafkaMessageType.UPDATE_ENTITY, event.user());
 	}
 
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleUserDeleted(UserDeletedEvent event) {
-		eventPublisher.publishEvent(TOPIC, KafkaMessage.Type.DELETE, event.id());
+		eventPublisher.publishEvent(TOPIC, KafkaMessage.KafkaMessageType.DELETE_ENTITY, event.id());
 	}
 
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handleUserRestored(UserRestoredEvent event) {
-		eventPublisher.publishEvent(TOPIC, KafkaMessage.Type.RESTORE, event.user());
+		eventPublisher.publishEvent(TOPIC, KafkaMessage.KafkaMessageType.RESTORE_ENTITY, event.user());
 	}
 }

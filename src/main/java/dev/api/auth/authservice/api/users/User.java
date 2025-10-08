@@ -67,7 +67,7 @@ public class User extends AuditableEntity {
 		super();
 	}
 
-	public UserDto generateDto() {
+	public UserDto toDto() {
 		return new UserDto(this.id, this.username, this.email, this.role);
 	}
 
