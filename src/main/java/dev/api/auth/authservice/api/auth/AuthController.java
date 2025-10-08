@@ -2,6 +2,7 @@ package dev.api.auth.authservice.api.auth;
 
 import dev.api.auth.authservice.api.auth.entities.LoginRequest;
 import dev.api.auth.authservice.api.auth.entities.RegisterRequest;
+import dev.api.auth.authservice.api.users.dtos.PasswordChange;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,6 +53,38 @@ public class AuthController {
 	})
 	public Map<String, String> register(@RequestBody RegisterRequest dto, HttpServletResponse response) {
 		return this.authService.register(dto, response);
+	}
+
+	@PostMapping("/start-password-reset")
+	@Operation(summary = "Initiate Password Reset", description = "Initiate password reset process for a user")
+	@io.swagger.v3.oas.annotations.parameters.RequestBody(
+			description = "Password reset payload",
+			required = true
+	)
+	@ApiResponses(value = {
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset initiated successfully"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+	})
+	public void initiatePasswordReset(@RequestBody String email) {
+		this.authService.initiatePasswordReset(email);
+	}
+
+	@PostMapping("/password-reset")
+	@Operation(summary = "Complete Password Reset", description = "Complete password reset process for a user")
+	@io.swagger.v3.oas.annotations.parameters.RequestBody(
+			description = "Password reset payload",
+			required = true
+	)
+	@ApiResponses(value = {
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset successfully"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+	})
+	public void completePasswordReset(@RequestBody PasswordChange dto) {
+		this.authService.completePasswordReset(dto);
 	}
 
 	@PostMapping("/logout")
