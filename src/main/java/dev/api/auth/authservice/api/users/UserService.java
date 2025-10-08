@@ -6,13 +6,15 @@ import dev.api.auth.authservice.api.users.dtos.UserDto;
 import dev.api.auth.authservice.common.entities.search.SearchCriteria;
 import dev.api.auth.authservice.common.entities.search.SqlParameters;
 import dev.api.auth.authservice.common.exceptions.ResourceNotFoundException;
+import dev.api.auth.authservice.common.kafka.EntityEventPublisher;
+import dev.api.auth.authservice.common.kafka.KafkaMessage;
+import dev.api.auth.authservice.common.kafka.events.KafkaTopics;
 import dev.api.auth.authservice.common.kafka.events.users.UserDeletedEvent;
 import dev.api.auth.authservice.common.kafka.events.users.UserRestoredEvent;
 import dev.api.auth.authservice.common.kafka.events.users.UserUpdatedEvent;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,12 +30,12 @@ public class UserService {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
-	private final ApplicationEventPublisher eventPublisher;
+	private final EntityEventPublisher eventPublisher;
 
 	public UserService(
 			UserRepository userRepository,
 			PasswordEncoder passwordEncoder,
-			ApplicationEventPublisher eventPublisher) {
+			EntityEventPublisher eventPublisher) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.eventPublisher = eventPublisher;
@@ -66,7 +68,7 @@ public class UserService {
 					}
 					return true;
 				})
-				.map(User::generateDto)
+				.map(User::toDto)
 				.sorted((u1, u2) -> {
 					if (searchCriteria.getSorters() != null) {
 						for (SearchCriteria.Sorter sorter : searchCriteria.getSorters()) {
@@ -104,7 +106,7 @@ public class UserService {
 	@Cacheable(value = "users", key = "'all'")
 	public List<UserDto> findAll() {
 		return this.userRepository.findAll().stream()
-				.map(User::generateDto)
+				.map(User::toDto)
 				.sorted(Comparator.comparing(UserDto::getId))
 				.toList();
 	}
@@ -117,7 +119,7 @@ public class UserService {
 	@Cacheable(value = "users", key = "'allIncludingDeleted'")
 	public List<UserDto> findAllIncludingDeleted() {
 		return this.userRepository.findAllIncludingDeleted().stream()
-				.map(User::generateDto)
+				.map(User::toDto)
 				.sorted(Comparator.comparing(UserDto::getId))
 				.toList();
 	}
@@ -144,7 +146,7 @@ public class UserService {
 		Optional<User> requestedUser = this.userRepository.findById(id);
 		if (requestedUser.isPresent()) {
 			User user = requestedUser.get();
-			return user.generateDto();
+			return user.toDto();
 		} else {
 			throw new ResourceNotFoundException("User with id " + id + " not found");
 		}
@@ -161,7 +163,7 @@ public class UserService {
 		Optional<User> requestedUser = this.userRepository.findByIdIncludingDeleted(id).stream().findFirst();
 		if (requestedUser.isPresent()) {
 			User user = requestedUser.get();
-			return user.generateDto();
+			return user.toDto();
 		} else {
 			throw new ResourceNotFoundException("User with id " + id + " not found");
 		}
@@ -177,7 +179,7 @@ public class UserService {
 		Optional<User> requestedUser = this.userRepository.findByEmail(email);
 		if (requestedUser.isPresent()) {
 			User user = requestedUser.get();
-			return user.generateDto();
+			return user.toDto();
 		} else {
 			throw new ResourceNotFoundException("User with email " + email + " not found");
 		}
@@ -193,7 +195,7 @@ public class UserService {
 		Optional<User> requestedUser = this.userRepository.findByUsername(username);
 		if (requestedUser.isPresent()) {
 			User user = requestedUser.get();
-			return user.generateDto();
+			return user.toDto();
 		} else {
 			throw new ResourceNotFoundException("User with username " + username + " not found");
 		}
@@ -214,8 +216,12 @@ public class UserService {
 	public UserDto update(UpdateUserDto dto) {
 		if (this.userRepository.existsById(dto.id())) {
 			User updated = this.userRepository.save(dto.updateUser());
-			UserDto updatedDto = updated.generateDto();
-			eventPublisher.publishEvent(new UserUpdatedEvent(updatedDto));
+			UserDto updatedDto = updated.toDto();
+			eventPublisher.publishEvent(
+					KafkaTopics.USER_EVENTS,
+					KafkaMessage.KafkaMessageType.UPDATE_ENTITY,
+					new UserUpdatedEvent(updatedDto)
+			);
 			return updatedDto;
 		} else {
 			throw new ResourceNotFoundException("User with id " + dto.id() + " not found");
@@ -241,8 +247,12 @@ public class UserService {
 
 		user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
 		User saved = userRepository.save(user);
-		UserDto savedDto = saved.generateDto();
-		eventPublisher.publishEvent(new UserUpdatedEvent(savedDto));
+		UserDto savedDto = saved.toDto();
+		eventPublisher.publishEvent(
+				KafkaTopics.USER_EVENTS,
+				KafkaMessage.KafkaMessageType.UPDATE_ENTITY,
+				new UserUpdatedEvent(savedDto)
+		);
 
 		return savedDto;
 	}
@@ -259,8 +269,12 @@ public class UserService {
 				.orElseThrow(() -> new ResourceNotFoundException("User with id " + dto.userId() + " not found"));
 		user.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
 		User saved = userRepository.save(user);
-		UserDto savedDto = saved.generateDto();
-		eventPublisher.publishEvent(new UserUpdatedEvent(savedDto));
+		UserDto savedDto = saved.toDto();
+		eventPublisher.publishEvent(
+				KafkaTopics.USER_EVENTS,
+				KafkaMessage.KafkaMessageType.UPDATE_ENTITY,
+				new UserUpdatedEvent(savedDto)
+		);
 
 		return savedDto;
 	}
@@ -282,7 +296,11 @@ public class UserService {
 						new ResourceNotFoundException("User with id " + id + " not found")
 				)
 		);
-		eventPublisher.publishEvent(new UserDeletedEvent(id));
+		eventPublisher.publishEvent(
+				KafkaTopics.USER_EVENTS,
+				KafkaMessage.KafkaMessageType.DELETE_ENTITY,
+				new UserDeletedEvent(id)
+		);
 	}
 
 	/**
@@ -303,8 +321,12 @@ public class UserService {
 			throw new ResourceNotFoundException("User with id " + id + " not found or not deleted");
 		}
 		this.userRepository.restoreById(originalUser.get().getId());
-		UserDto restoredUser = originalUser.get().generateDto();
-		eventPublisher.publishEvent(new UserRestoredEvent(restoredUser));
+		UserDto restoredUser = originalUser.get().toDto();
+		eventPublisher.publishEvent(
+				KafkaTopics.USER_EVENTS,
+				KafkaMessage.KafkaMessageType.RESTORE_ENTITY,
+				new UserRestoredEvent(restoredUser)
+		);
 		return restoredUser;
 	}
 }

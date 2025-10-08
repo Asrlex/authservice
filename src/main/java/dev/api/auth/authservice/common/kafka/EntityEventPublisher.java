@@ -25,7 +25,7 @@ public class EntityEventPublisher {
 	 * @param payload the payload of the event
 	 * @param <T>     the type of the payload
 	 */
-	public <T> void publishEvent(String topic, KafkaMessage.Type type, T payload) {
+	public <T> void publishEvent(String topic, KafkaMessage.KafkaMessageType type, T payload) {
 		KafkaMessage<T> message = new KafkaMessage<>(type, payload);
 		try {
 			String messageJson = objectMapper.writeValueAsString(message);

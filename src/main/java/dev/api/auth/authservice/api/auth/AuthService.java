@@ -10,6 +10,10 @@ import dev.api.auth.authservice.api.users.UserRepository;
 import dev.api.auth.authservice.api.users.dtos.PasswordChange;
 import dev.api.auth.authservice.common.exceptions.ResourceAlreadyInUseException;
 import dev.api.auth.authservice.common.exceptions.ResourceNotFoundException;
+import dev.api.auth.authservice.common.kafka.EntityEventPublisher;
+import dev.api.auth.authservice.common.kafka.KafkaMessage;
+import dev.api.auth.authservice.common.kafka.events.KafkaTopics;
+import dev.api.auth.authservice.common.kafka.events.emails.EmailBodyPayload;
 import dev.api.auth.authservice.security.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,19 +40,22 @@ public class AuthService {
 	private final RefreshTokenService refreshTokenService;
 	private final ResetTokenRepository resetTokenRepository;
 	private final TokenUtils tokenUtils;
+	private final EntityEventPublisher eventPublisher;
 
 	public AuthService(JwtService jwtService,
 					   UserRepository userRepository,
 					   PasswordEncoder passwordEncoder,
 					   RefreshTokenService refreshTokenService,
 					   ResetTokenRepository resetTokenRepository,
-					   TokenUtils tokenUtils) {
+					   TokenUtils tokenUtils,
+					   EntityEventPublisher eventPublisher) {
 		this.jwtService = jwtService;
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.refreshTokenService = refreshTokenService;
 		this.resetTokenRepository = resetTokenRepository;
 		this.tokenUtils = tokenUtils;
+		this.eventPublisher = eventPublisher;
 	}
 
 	/**
@@ -79,7 +86,7 @@ public class AuthService {
 	/**
 	 * Register a new user and return JWT token
 	 *
-	 * @param dto 	- registration data
+	 * @param dto      - registration data
 	 * @param response - HTTP response
 	 * @return JWT token
 	 */
@@ -109,24 +116,38 @@ public class AuthService {
 						refreshTokenService.getRefreshTtl().getSeconds()
 				)
 		);
+
+		eventPublisher.publishEvent(KafkaTopics.USER_EVENTS,
+				KafkaMessage.KafkaMessageType.CREATE_ENTITY,
+				savedUser.toDto()
+		);
+		eventPublisher.publishEvent(KafkaTopics.EMAIL_EVENTS,
+				KafkaMessage.KafkaMessageType.EMAIL,
+				new EmailBodyPayload(
+						savedUser.getEmail(),
+						"Welcome to Our Service",
+						"Hello " + savedUser.getUsername() + ", welcome to our service!"
+				)
+		);
+
 		return token;
 	}
 
 	/**
 	 * Logout user and invalidate their refresh token
 	 *
-	 * @param body - request body containing optional "jti" to revoke specific token
-	 * @param request - HTTP request
+	 * @param body     - request body containing optional "jti" to revoke specific token
+	 * @param request  - HTTP request
 	 * @param response - HTTP response
 	 */
-	public void logout(Map<String,String> body, HttpServletRequest request, HttpServletResponse response) {
+	public void logout(Map<String, String> body, HttpServletRequest request, HttpServletResponse response) {
 		String jtiStr = body.get("jti");
 		if (jtiStr != null) refreshTokenService.revokeByJti(UUID.fromString(jtiStr));
 		else if (request.getUserPrincipal() != null) {
 			String userId = request.getUserPrincipal().getName();
 			refreshTokenService.revokeAllForUser(userId);
 		}
-		response.addHeader(HttpHeaders.SET_COOKIE, createRefreshTokenCookie("", 0) );
+		response.addHeader(HttpHeaders.SET_COOKIE, createRefreshTokenCookie("", 0));
 	}
 
 	/**
@@ -147,8 +168,14 @@ public class AuthService {
 		resetTokenRepository.save(passwordResetToken);
 
 		String resetLink = "https://yourapp.com/reset-password?token=" + token + "&email=" + email;
-		// Simulate sending email by printing to console
-		System.out.println("Password reset link for " + email + ": " + resetLink);
+		eventPublisher.publishEvent(KafkaTopics.EMAIL_EVENTS,
+				KafkaMessage.KafkaMessageType.EMAIL,
+				new EmailBodyPayload(
+						user.getEmail(),
+						"Password Reset Request",
+						"Click the following link to reset your password: " + resetLink
+				)
+		);
 	}
 
 	/**
@@ -169,13 +196,21 @@ public class AuthService {
 		userRepository.save(user);
 		resetToken.setUsed(true);
 		resetTokenRepository.save(resetToken);
-		// Simulate sending confirmation email by printing to console
-		System.out.println("Password reset completed for user: " + dto.resetToken());
+
+		eventPublisher.publishEvent(KafkaTopics.EMAIL_EVENTS,
+				KafkaMessage.KafkaMessageType.EMAIL,
+				new EmailBodyPayload(
+						user.getEmail(),
+						"Password Successfully Reset",
+						"Hello " + user.getUsername() + ", your password has been successfully reset."
+				)
+		);
 	}
 
 	/**
 	 * Create a secure HttpOnly cookie for the refresh token
-	 * @param value - the refresh token value
+	 *
+	 * @param value  - the refresh token value
 	 * @param maxAge - max age in seconds
 	 * @return the Set-Cookie header string
 	 */
