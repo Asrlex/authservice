@@ -3,6 +3,7 @@ package dev.api.auth.authservice.common.kafka;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public class KafkaMessage<T> {
 
@@ -10,6 +11,8 @@ public class KafkaMessage<T> {
 		CREATE_ENTITY, UPDATE_ENTITY, DELETE_ENTITY, RESTORE_ENTITY, EMAIL
 	}
 
+	@Getter
+	private final UUID id = UUID.randomUUID();
 	@Getter
 	private final KafkaMessageType type;
 	@Getter
