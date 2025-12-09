@@ -1,0 +1,51 @@
+version: "3.9"
+services:
+  authservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: authservice
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: authservice_db
+      DB_USER: appuser
+      DB_PASSWORD: apppass
+      JWT_SECRET: "3n4iouhyub3ruh9o2i3jio4iug124j5o6u7y8t9r0e"
+      JWT_EXPIRATION: "3600000"
+      X_API_KEY: "houih3iunc9buir2i3urb7hc9u2h3o4i5u6y7t8r9e0"
+    depends_on:
+      - db
+      - kafka
+    volumes:
+      - ./db/migration:/app/db/migration
+    restart: unless-stopped
+    networks:
+      - microservices-net
+
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+      POSTGRES_DB: authservice_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/migration:/app/db/migration
+    restart: unless-stopped
+    networks:
+      - microservices-net
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  microservices-net:
+    external: true
