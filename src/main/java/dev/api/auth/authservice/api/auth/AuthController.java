@@ -2,8 +2,9 @@ package dev.api.auth.authservice.api.auth;
 
 import dev.api.auth.authservice.api.auth.entities.LoginRequest;
 import dev.api.auth.authservice.api.auth.entities.RegisterRequest;
-import dev.api.auth.authservice.api.users.dtos.PasswordChange;
+import dev.api.auth.authservice.api.users.entities.dtos.PasswordChange;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,13 +28,13 @@ public class AuthController {
 	@PostMapping("/login")
 	@Operation(summary = "User Login", description = "Authenticate a user and return a JWT token")
 	@io.swagger.v3.oas.annotations.parameters.RequestBody(
-		description = "Login payload",
-		required = true
+			description = "Login payload",
+			required = true
 	)
 	@ApiResponses(value = {
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successful login"),
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access")
+			@ApiResponse(responseCode = "200", description = "Successful login"),
+			@ApiResponse(responseCode = "401", description = "Invalid credentials"),
+			@ApiResponse(responseCode = "403", description = "Forbidden access")
 	})
 	public Map<String, String> login(@RequestBody LoginRequest dto, HttpServletRequest request, HttpServletResponse response) {
 		return this.authService.login(dto, request, response);
@@ -43,13 +44,13 @@ public class AuthController {
 	@ResponseStatus(HttpStatus.CREATED)
 	@Operation(summary = "User Registration", description = "Register a new user")
 	@io.swagger.v3.oas.annotations.parameters.RequestBody(
-		description = "Registration payload",
-		required = true
+			description = "Registration payload",
+			required = true
 	)
 	@ApiResponses(value = {
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Successful registration"),
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access")
+			@ApiResponse(responseCode = "201", description = "Successful registration"),
+			@ApiResponse(responseCode = "400", description = "Invalid input data"),
+			@ApiResponse(responseCode = "403", description = "Forbidden access")
 	})
 	public Map<String, String> register(@RequestBody RegisterRequest dto, HttpServletResponse response) {
 		return this.authService.register(dto, response);
@@ -62,10 +63,10 @@ public class AuthController {
 			required = true
 	)
 	@ApiResponses(value = {
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset initiated successfully"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+			@ApiResponse(responseCode = "200", description = "Password reset initiated successfully"),
+			@ApiResponse(responseCode = "400", description = "Invalid input data"),
+			@ApiResponse(responseCode = "403", description = "Forbidden access"),
+			@ApiResponse(responseCode = "404", description = "User not found")
 	})
 	public void initiatePasswordReset(@RequestBody String email) {
 		this.authService.initiatePasswordReset(email);
@@ -78,10 +79,10 @@ public class AuthController {
 			required = true
 	)
 	@ApiResponses(value = {
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset successfully"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input data"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+			@ApiResponse(responseCode = "200", description = "Password reset successfully"),
+			@ApiResponse(responseCode = "400", description = "Invalid input data"),
+			@ApiResponse(responseCode = "403", description = "Forbidden access"),
+			@ApiResponse(responseCode = "404", description = "User not found")
 	})
 	public void completePasswordReset(@RequestBody PasswordChange dto) {
 		this.authService.completePasswordReset(dto);
@@ -90,11 +91,11 @@ public class AuthController {
 	@PostMapping("/logout")
 	@Operation(summary = "User Logout", description = "Logout a user and invalidate their refresh token")
 	@ApiResponses(value = {
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successful logout"),
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid token"),
-			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden access")
+			@ApiResponse(responseCode = "200", description = "Successful logout"),
+			@ApiResponse(responseCode = "400", description = "Invalid token"),
+			@ApiResponse(responseCode = "403", description = "Forbidden access")
 	})
-	public void logout(@RequestBody Map<String,String> body, HttpServletRequest request, HttpServletResponse response) {
+	public void logout(@RequestBody Map<String, String> body, HttpServletRequest request, HttpServletResponse response) {
 		this.authService.logout(body, request, response);
 	}
 }

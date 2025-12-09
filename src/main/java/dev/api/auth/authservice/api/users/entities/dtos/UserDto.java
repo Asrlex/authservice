@@ -1,4 +1,4 @@
-package dev.api.auth.authservice.api.users.dtos;
+package dev.api.auth.authservice.api.users.entities.dtos;
 
 import lombok.Getter;
 import lombok.Setter;

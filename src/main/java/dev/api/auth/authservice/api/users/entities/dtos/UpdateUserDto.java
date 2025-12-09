@@ -1,6 +1,6 @@
-package dev.api.auth.authservice.api.users.dtos;
+package dev.api.auth.authservice.api.users.entities.dtos;
 
-import dev.api.auth.authservice.api.users.User;
+import dev.api.auth.authservice.api.users.entities.User;
 
 public record UpdateUserDto(Long id, String username, String email, String role) {
 

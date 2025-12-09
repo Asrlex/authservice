@@ -1,6 +1,6 @@
-package dev.api.auth.authservice.api.users;
+package dev.api.auth.authservice.api.users.entities;
 
-import dev.api.auth.authservice.api.users.dtos.UserDto;
+import dev.api.auth.authservice.api.users.entities.dtos.UserDto;
 import dev.api.auth.authservice.common.audit.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.Getter;

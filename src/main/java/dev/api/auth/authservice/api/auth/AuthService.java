@@ -5,15 +5,16 @@ import dev.api.auth.authservice.api.auth.entities.LoginRequest;
 import dev.api.auth.authservice.api.auth.entities.PasswordResetToken;
 import dev.api.auth.authservice.api.auth.entities.RegisterRequest;
 import dev.api.auth.authservice.api.auth.utils.TokenUtils;
-import dev.api.auth.authservice.api.users.User;
 import dev.api.auth.authservice.api.users.UserRepository;
-import dev.api.auth.authservice.api.users.dtos.PasswordChange;
+import dev.api.auth.authservice.api.users.entities.User;
+import dev.api.auth.authservice.api.users.entities.dtos.PasswordChange;
 import dev.api.auth.authservice.common.exceptions.ResourceAlreadyInUseException;
 import dev.api.auth.authservice.common.exceptions.ResourceNotFoundException;
 import dev.api.auth.authservice.common.kafka.EntityEventPublisher;
 import dev.api.auth.authservice.common.kafka.KafkaMessage;
 import dev.api.auth.authservice.common.kafka.events.KafkaTopics;
 import dev.api.auth.authservice.common.kafka.events.emails.EmailBodyPayload;
+import dev.api.auth.authservice.common.kafka.events.users.UserCreatedEvent;
 import dev.api.auth.authservice.security.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -101,7 +102,7 @@ public class AuthService {
 		User newUser = new User(
 				dto.getUsername(),
 				dto.getEmail(),
-				passwordEncoder.encode(dto.getPassword()),
+				passwordEncoder.encode(dto.getPasswordHash()),
 				dto.getRole());
 		User savedUser = userRepository.save(newUser);
 
@@ -117,9 +118,10 @@ public class AuthService {
 				)
 		);
 
-		eventPublisher.publishEvent(KafkaTopics.USER_EVENTS,
+		eventPublisher.publishEvent(
+				KafkaTopics.USER_EVENTS,
 				KafkaMessage.KafkaMessageType.CREATE_ENTITY,
-				savedUser.toDto()
+				new UserCreatedEvent(savedUser.toDto())
 		);
 		eventPublisher.publishEvent(KafkaTopics.EMAIL_EVENTS,
 				KafkaMessage.KafkaMessageType.EMAIL,

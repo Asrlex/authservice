@@ -1,6 +1,6 @@
 package dev.api.auth.authservice.common.audit;
 
-import dev.api.auth.authservice.api.users.User;
+import dev.api.auth.authservice.api.users.entities.User;
 import dev.api.auth.authservice.common.entities.StandardParameters;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,7 +10,6 @@ import org.springframework.lang.NonNull;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @NoRepositoryBean
 public interface AuditRepository<T extends AuditableEntity, ID>
@@ -47,5 +46,5 @@ public interface AuditRepository<T extends AuditableEntity, ID>
 	List<T> findByIdIncludingDeleted(@Param("id") ID id);
 
 	@Query(value = BaseQueries.RESTORE_BY_ID)
-	Optional<T> restoreById(@Param("id") ID id);
+	void restoreById(@Param("id") ID id);
 }

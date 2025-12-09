@@ -1,6 +1,6 @@
 package dev.api.auth.authservice.security;
 
-import dev.api.auth.authservice.api.users.User;
+import dev.api.auth.authservice.api.users.entities.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -78,17 +78,6 @@ public class JwtService {
 	 */
 	public void validateToken(String token) throws JwtException {
 		parseToken(token);
-	}
-
-	/**
-	 * Extracts the subject from the given JWT token.
-	 *
-	 * @param token the JWT token
-	 * @return the subject (typically the username)
-	 * @throws JwtException if the token is invalid or expired
-	 */
-	public String getSubject(String token) {
-		return parseToken(token).getBody().getSubject();
 	}
 
 	/**

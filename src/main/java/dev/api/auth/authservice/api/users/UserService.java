@@ -1,8 +1,9 @@
 package dev.api.auth.authservice.api.users;
 
-import dev.api.auth.authservice.api.users.dtos.PasswordChange;
-import dev.api.auth.authservice.api.users.dtos.UpdateUserDto;
-import dev.api.auth.authservice.api.users.dtos.UserDto;
+import dev.api.auth.authservice.api.users.entities.User;
+import dev.api.auth.authservice.api.users.entities.dtos.PasswordChange;
+import dev.api.auth.authservice.api.users.entities.dtos.UpdateUserDto;
+import dev.api.auth.authservice.api.users.entities.dtos.UserDto;
 import dev.api.auth.authservice.common.entities.search.SearchCriteria;
 import dev.api.auth.authservice.common.entities.search.SqlParameters;
 import dev.api.auth.authservice.common.exceptions.ResourceNotFoundException;

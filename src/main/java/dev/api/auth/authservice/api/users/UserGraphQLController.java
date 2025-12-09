@@ -1,6 +1,6 @@
 package dev.api.auth.authservice.api.users;
 
-import dev.api.auth.authservice.api.users.dtos.UserDto;
+import dev.api.auth.authservice.api.users.entities.dtos.UserDto;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.security.core.Authentication;
@@ -38,4 +38,3 @@ public class UserGraphQLController {
 		return userService.getCurrent(authentication);
 	}
 }
-

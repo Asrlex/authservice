@@ -1,6 +1,7 @@
 package dev.api.auth.authservice.api.users;
 
 
+import dev.api.auth.authservice.api.users.entities.User;
 import dev.api.auth.authservice.common.audit.AuditRepository;
 
 import java.util.Optional;
