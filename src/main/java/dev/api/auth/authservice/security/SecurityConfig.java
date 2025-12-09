@@ -2,9 +2,9 @@ package dev.api.auth.authservice.security;
 
 import dev.api.auth.authservice.common.filter.AuditContextFilter;
 import dev.api.auth.authservice.common.filter.RequestLoggingFilter;
-import dev.api.auth.authservice.security.guards.ApiKeyAuthenticationFilter;
-import dev.api.auth.authservice.security.guards.CompositeAuthenticationFilter;
-import dev.api.auth.authservice.security.guards.JwtAuthenticationFilter;
+import dev.api.auth.authservice.security.filters.ApiKeyAuthenticationFilter;
+import dev.api.auth.authservice.security.filters.CompositeAuthenticationFilter;
+import dev.api.auth.authservice.security.filters.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package dev.api.auth.authservice.security.guards;
+package dev.api.auth.authservice.security.filters;
 
 import dev.api.auth.authservice.common.entities.StandardParameters;
 import jakarta.servlet.FilterChain;

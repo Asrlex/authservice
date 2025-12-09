@@ -1,4 +1,4 @@
-package dev.api.auth.authservice.security.guards;
+package dev.api.auth.authservice.security.filters;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
